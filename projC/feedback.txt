@@ -1,0 +1,1113 @@
+============================================
+vis/result.rtx
+04:26:40_Friday_25_May_2018
+============================================
+Feedback:
+	Your program ("Nimsys.java") has been submitted successfully.
+	Compiling your program with "javac"...
+	Your program has been result.rtxd successfully :-)
+Now, it's your responsibility to test your program for correctness!
+Here is a simple test case, and the results:
+============================================
+Test for input file: in1
+Expected results:							Your results:
+Welcome to Nim								Welcome to Nim
+
+$Are you sure you want to remove all players? (y/n)			$Are you sure you want to remove all players? (y/n)
+
+$									$
+$									$
+$									$
+$									$
+$									$
+Initial stone count: 1							Initial stone count: 1
+Maximum stone removal: 1						Maximum stone removal: 1
+Player 1: George Washington						Player 1: George Washington
+Player 2: John Adams							Player 2: John Adams
+
+1 stones left: *							1 stones left: *
+George's turn - remove how many?					George's turn - remove how many?
+
+Game Over								Game Over
+John Adams wins!							John Adams wins!
+
+$									$
+Initial stone count: 1							Initial stone count: 1
+Maximum stone removal: 1						Maximum stone removal: 1
+Player 1: George Washington						Player 1: George Washington
+Player 2: John Adams							Player 2: John Adams
+
+1 stones left: *							1 stones left: *
+George's turn - remove how many?					George's turn - remove how many?
+
+Game Over								Game Over
+John Adams wins!							John Adams wins!
+
+$									$
+Initial stone count: 1							Initial stone count: 1
+Maximum stone removal: 1						Maximum stone removal: 1
+Player 1: John Adams							Player 1: John Adams
+Player 2: Thomas Jefferson						Player 2: Thomas Jefferson
+
+1 stones left: *							1 stones left: *
+John's turn - remove how many?						John's turn - remove how many?
+
+Game Over								Game Over
+Thomas Jefferson wins!							Thomas Jefferson wins!
+
+$									$
+Initial stone count: 1							Initial stone count: 1
+Maximum stone removal: 1						Maximum stone removal: 1
+Player 1: Thomas Jefferson						Player 1: Thomas Jefferson
+Player 2: James Madison							Player 2: James Madison
+
+1 stones left: *							1 stones left: *
+Thomas's turn - remove how many?					Thomas's turn - remove how many?
+
+Game Over								Game Over
+James Madison wins!							James Madison wins!
+
+$100% | 01 games | James Madison					$100% | 01 games | James Madison
+67%  | 03 games | John Adams						67%  | 03 games | John Adams
+50%  | 02 games | Thomas Jefferson					50%  | 02 games | Thomas Jefferson
+0%   | 02 games | George Washington					0%   | 02 games | George Washington
+
+$									$
+
+Your results seem to be CORRECT :-).
+============================================
+Test for input file: in2
+Expected results:							Your results:
+Welcome to Nim								Welcome to Nim
+
+$george,George,Washington,2 games,0 wins				$george,George,Washington,2 games,0 wins
+jadams,John,Adams,3 games,2 wins					jadams,John,Adams,3 games,2 wins
+jmadison,James,Madison,1 games,1 wins					jmadison,James,Madison,1 games,1 wins
+tom,Thomas,Jefferson,2 games,1 wins					tom,Thomas,Jefferson,2 games,1 wins
+
+$100% | 01 games | James Madison					$100% | 01 games | James Madison
+67%  | 03 games | John Adams						67%  | 03 games | John Adams
+50%  | 02 games | Thomas Jefferson					50%  | 02 games | Thomas Jefferson
+0%   | 02 games | George Washington					0%   | 02 games | George Washington
+
+$									$
+
+Your results seem to be CORRECT :-).
+============================================
+Test for input file: in3
+Expected results:							Your results:
+Welcome to Nim								Welcome to Nim
+
+$'createplayer' is not a valid command.					$'createplayer' is not a valid command.
+
+$Incorrect number of arguments supplied to command.			$Incorrect number of arguments supplied to command.
+
+$									$
+$									$
+
+Your results seem to be CORRECT :-).
+============================================
+src/NimGame.java
+04:26:16_Friday_25_May_2018
+============================================
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+
+import java.util.Arrays;
+import java.util.Scanner;
+
+public class NimGame implements AdvancedNimGame {
+    private NimPlayer player1;
+    private NimPlayer player2;
+    private NimPlayer currentPlayer;
+    private NimPlayer winner;
+    private int initialNumber;
+    private int upperBound;
+    private boolean[] available;
+    private Scanner scanner;
+    private String lastMove = null;
+
+
+    public NimGame(int initialNumber, int upperBound, 
+                    NimPlayer player1, NimPlayer player2, 
+                    Scanner scanner) {
+        setInitialNumber(initialNumber);
+        setUpperBound(upperBound);
+        this.player1 = player1;
+        player1.isFirst=1;
+        this.player2 = player2;
+        player2.isFirst=2;
+        this.scanner = scanner;
+        this.available = new boolean[initialNumber];
+    }
+
+    public int getInitialNumber() {
+        return initialNumber;
+    }
+
+    public void setInitialNumber(int initialNumber) {
+        this.initialNumber = initialNumber;
+    }
+
+    public int getUpperBound() {
+        return upperBound;
+    }
+
+    public void setUpperBound(int upperBound) {
+        this.upperBound = upperBound;
+    }
+
+    //Show game info,and start game
+    public NimPlayer start() {
+        System.out.println("\nInitial stone count: " + initialNumber);
+        System.out.println("Maximum stone removal: " + upperBound);
+        System.out.println("Player 1: " + player1.getGivenName() 
+                            + " " + player1.getFamilyName());
+        System.out.println("Player 2: " + player2.getGivenName() 
+                            + " " + player2.getFamilyName());
+        while (initialNumber > 0) {
+            turn(player1);
+            turn(player2);
+        }
+        gameOver();
+        return winner;
+    }
+
+    // Turns between two players
+
+    private void turn(NimPlayer player) {
+        boolean removeStoneOutsideRange = true;
+        int stoneToMove = 0;
+        int upper = Math.min(upperBound, initialNumber);
+        if (initialNumber > 0) {
+            currentPlayer = player;
+            while (removeStoneOutsideRange) {
+                displayStones();
+                System.out.println(currentPlayer.getGivenName()
+                        + "'s turn - remove how many?");
+                if (currentPlayer.getType() == 0) {
+                    try {
+                        stoneToMove = currentPlayer.removeStone(scanner);
+                        //upper = Math.min(upperBound, initialNumber);
+                        if (stoneToMove < 1 || stoneToMove > upper)
+                            throw new Exception();
+                        initialNumber = initialNumber - stoneToMove;
+                        removeStoneOutsideRange = false;
+                    } catch (Exception e) {
+                        System.out.println(
+                            "Invalid move.You must remove between 1 and "
+                            + upper + " stones.");
+                    }
+                } else if (currentPlayer.getType() == 1) {
+                    stoneToMove = currentPlayer.removeStone(initialNumber, upper);
+                    initialNumber = initialNumber - stoneToMove;
+                    removeStoneOutsideRange = false;
+                }
+            }
+            //When no stones left, then the method judgeWinner() returns the winner
+            if (initialNumber <= 0) {
+                winner = judgeWinner();
+            }
+        }
+    }
+
+    // If current player is player1,then player2 wins, and vice versa.
+    private NimPlayer judgeWinner() {
+        if (currentPlayer == player1)
+            return player2;
+        else
+            return player1;
+    }
+
+    // Display the number of stones in "*"
+    private void displayStones() {
+        System.out.println();
+        if (initialNumber > 0) {
+            System.out.print(initialNumber + " stones left:");
+            for (int i = 0; i < initialNumber; i++) {
+                System.out.print(" *");
+            }
+            System.out.println();
+        }
+    }
+
+    //Show game is over and who won the game.
+    public void gameOver() {
+        System.out.println("\nGame Over");
+        System.out.println(winner.getGivenName() + " " +
+                             winner.getFamilyName() + " wins!");
+    }
+
+    public NimPlayer advancedStart() {
+        for (int i = 0; i < available.length; i++) {
+            available[i] = true;
+        }
+        System.out.println("\nInitial stone count: " + initialNumber);
+        System.out.print("Stones display:");
+        advancedDisplayStones(available);
+        System.out.println("Player 1: " + player1.getGivenName() 
+                                + " " + player1.getFamilyName());
+        System.out.println("Player 2: " + player2.getGivenName() 
+                                + " " + player2.getFamilyName());
+        while (initialNumber > 0) {
+            advancedTurn(player1);
+            advancedTurn(player2);
+        }
+        gameOver();
+        return winner;
+    }
+
+    public void advancedTurn(NimPlayer player) {
+        //if lastMove=null,means AI first,else AI second
+        int[] stoneToMove = new int[2];
+        boolean removeStoneOutsideRange = true;
+        if (initialNumber > 0) {
+            currentPlayer = player;
+            while (removeStoneOutsideRange) {
+                System.out.print("\n" + initialNumber + " stones left:");
+                advancedDisplayStones(available);
+                System.out.println(
+                    currentPlayer.getGivenName()
+                    + "'s turn - which to remove?");
+                if (currentPlayer.getType() == 0) {
+                    try {
+                        lastMove = currentPlayer.advancedMove(available, scanner);
+                        String[] userInput = lastMove.split(" ");
+                        stoneToMove[0] = Integer.valueOf(userInput[0]);
+                        stoneToMove[1] = Integer.valueOf(userInput[1]);
+                        available = advancedRemoveStones(available, stoneToMove);
+                        initialNumber = initialNumber - stoneToMove[1];
+                        removeStoneOutsideRange = false;
+                    } catch (Exception e) {
+                        System.out.println("Invalid move.");
+                    }
+                } else if (currentPlayer.getType() == 1) {
+                    lastMove=currentPlayer.advancedMove(available,lastMove);
+                    String[] AIInput = lastMove.split(" ");
+                    stoneToMove[0] = Integer.valueOf(AIInput[0]);
+                    stoneToMove[1] = Integer.valueOf(AIInput[1]);
+                    try {
+                        available = advancedRemoveStones(available, stoneToMove);
+                        initialNumber=initialNumber-stoneToMove[1];
+                        removeStoneOutsideRange = false;
+                    }catch (Exception e){
+                        System.out.println("AISB");
+                    }
+                }
+            }
+            //When no stones left, then the method judgeWinner() returns the winner
+            if (initialNumber <= 0) {
+                winner = advancedJudgeWinner();
+                lastMove=null;
+            }
+        }
+    }
+     //advanced method to remove stones                                                                                                                                                                                                                     
+    private boolean[] advancedRemoveStones(boolean[] available,int[] stoneToMove) 
+        throws Exception {
+        if (! (stoneToMove[0] >= 1 && stoneToMove[0] <= available.length))
+            throw new Exception();
+        if (stoneToMove[1] != 1 && stoneToMove[1] != 2)
+            throw new Exception();
+        int firstPosition = stoneToMove[0] - 1;
+        int secondPosition = firstPosition + stoneToMove[1] - 1;
+        if (available[firstPosition] == false || available[secondPosition] == false)
+            throw new Exception();
+        if (secondPosition > available.length)
+            throw new Exception();
+        available[firstPosition] = false;
+        available[secondPosition] = false;
+        return available;
+    }
+
+    //advanced method to display stones
+    public void advancedDisplayStones(boolean[] available) {
+        if (initialNumber > 0) {
+            for (int i = 0; i < available.length; i++) {
+                if (available[i] == true)
+                    System.out.print(" <" + (i + 1) + ",*>");
+                else System.out.print(" <" + (i + 1) + ",x>");
+            }
+            System.out.println();
+        }
+    }
+
+
+    public NimPlayer advancedJudgeWinner() {
+        return currentPlayer;
+    }
+
+
+}
+============================================
+src/NimAIPlayer.java
+04:26:15_Friday_25_May_2018
+============================================
+
+
+/**
+ * Created by Administrator on 2018/5/22.
+ */
+public class NimAIPlayer extends NimPlayer implements Testable {
+    public NimAIPlayer() {
+        super();
+    }
+
+    public NimAIPlayer(String userName, String familyName, String givenName) {
+        super(userName, familyName, givenName, 1);
+    }
+
+    public int removeStone(int initialNumber, int upperBound) {
+        int stoneNumber = 1;
+        int k = 0;
+        for (stoneNumber = 1; stoneNumber <= upperBound; stoneNumber++) {
+            if (((initialNumber - stoneNumber) - 1) % (upperBound + 1) == 0) return stoneNumber;
+        }
+        return stoneNumber;
+    }
+
+    public String advancedMove(boolean[] available, String lastMove) {
+        String res = null;
+        int mid = available.length / 2;
+        int midNext = mid + 1;
+        if (this.isFirst == 1) {
+            if (lastMove == null) {
+                if (available.length % 2 == 0) {
+                    int first = mid;
+                    res = String.valueOf(first) + " 2";
+                } else {
+                    int first = mid + 1;
+                    res = String.valueOf(first) + " 1";
+                }
+            } else {
+                String[] lastInput = lastMove.split(" ");
+                int lastFirst = Integer.valueOf(lastInput[0]);
+                int lastSecond = lastFirst + Integer.valueOf(lastInput[1]) - 1;
+                int first = available.length + 1 - lastSecond;
+                res = String.valueOf(first) + " " + lastInput[1];
+            }
+        }
+        if (this.isFirst == 2) {
+            String[] lastInput = lastMove.split(" ");
+            int lastFirst = Integer.valueOf(lastInput[0]);
+            int lastSecond = lastFirst + Integer.valueOf(lastInput[1]) - 1;
+            if (available.length % 2 == 0) {
+
+            } else {
+
+            }
+        }
+        return res;
+    }
+}
+============================================
+src/Testable.java
+04:26:20_Friday_25_May_2018
+============================================
+
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+public interface Testable {
+    public String advancedMove(boolean[] available,String lastMove);
+}
+============================================
+src/NimHumanPlayer.java
+04:26:17_Friday_25_May_2018
+============================================
+
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+import java.util.Scanner;
+
+public class NimHumanPlayer extends NimPlayer {
+    public NimHumanPlayer(){
+
+    }
+    public NimHumanPlayer(String userName, 
+                            String familyName, String givenName) {
+        super(userName, familyName, givenName,0);
+    }
+}
+============================================
+src/NimPlayer.java
+04:26:18_Friday_25_May_2018
+============================================
+
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+
+import java.io.*;
+import java.util.Scanner;
+
+abstract class NimPlayer implements Serializable,Testable{
+
+	private String userName;
+	private String familyName;
+	private String givenName;
+
+
+
+	//if type=0,the player is human,if type=1,the player is AI
+	private int type=0;
+	public int winTimes = 0;
+	public int playTimes = 0;
+	public int rank = 0;
+	public float ranking = 0;
+	public int index = 0;
+	//isFirst=1,player1,=2 player2
+	public int isFirst=0;
+	public NimPlayer(){
+
+	}
+
+	public NimPlayer(String userName, String familyName, 
+						String givenName,int type) {
+		setType(type);
+		setUserName(userName);
+		setFamilyName(familyName);
+		setGivenName(givenName);
+	}
+	
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getFamilyName() {
+		return familyName;
+	}
+
+	public void setFamilyName(String familyName) {
+		this.familyName = familyName;
+	}
+
+	public String getGivenName() {
+		return givenName;
+	}
+
+	public void setGivenName(String givenName) {
+		this.givenName = givenName;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	//reset the game
+	public void reset() {
+		winTimes = 0;
+		playTimes = 0;
+		rank = 0;
+	}
+	
+	//display info about players
+	public void display() {
+		System.out.println(
+			userName + "," + givenName + "," +
+			familyName + "," + playTimes
+			 +" games," + winTimes + " wins");
+	}
+
+	//show rank of players
+	public void rankings() {
+		String ranking = String.valueOf(rank) + "%";
+		System.out.printf(
+			"%-5s| %02d games | %s %s\n",
+			 ranking, playTimes, givenName, familyName);
+	}
+
+	// Remove stones during the game
+	public int removeStone(Scanner scanner) {
+		int stoneNumber = scanner.nextInt();
+		scanner.nextLine();
+		return stoneNumber;
+	}
+	public int removeStone(int initialNumber,int upperBound){
+		int stoneNumber=0;
+		return stoneNumber;
+	}
+	public String advancedMove(boolean[] available, Scanner scanner){
+		
+		return scanner.nextLine();
+	}
+	public String advancedMove(boolean[] available, String lastMove){
+		return lastMove;
+	}
+}
+============================================
+src/Nimsys.java
+04:26:19_Friday_25_May_2018
+============================================
+
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.Comparator;
+import java.io.*;
+
+public class Nimsys {
+    public Nimsys() {
+        if (checkFileExist()) this.setPlayers(readPlayer());
+    }
+
+    final int a = 100;
+    public boolean isInNimsys = true;
+    public int pos = 0;
+    public NimPlayer playerUpdate;
+    private String fileName = "players.dat";
+    private NimPlayer[] players = new NimPlayer[a];
+    private ArrayList<NimPlayer> playersAL;
+    private String[] commands = {"addplayer", "editplayer",
+                             "removeplayer", "displayplayer", 
+                            "resetstats", "rankings", 
+                            "addaiplayer", "startgame",
+                             "startadvancedgame", "exit"};
+    Scanner scanner = new Scanner(System.in);
+
+   public static void main(String[] args) {
+        System.out.println("Welcome to Nim");
+        Nimsys newNim = new Nimsys();
+        newNim.command();
+    }
+    
+    //different commands correspond to different methods
+    public void command() {
+        while (isInNimsys) {
+            System.out.print("\n$");
+            String[] userInput = scanner.nextLine().split(" ");
+            if (! userInput[0].isEmpty()) {
+                switch (userInput[0]) {
+                    case "addplayer":
+                        String[] addPlayer = null;
+                        try {
+                            try {
+                                addPlayer = userInput[1].split(",");
+                            } catch (Exception e) {
+                                System.out.println(
+                                    "Incorrect number of arguments supplied to command.");
+                                break;
+                            }
+                            checkArguments(3, addPlayer.length);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "Incorrect number of arguments supplied to command.");
+                            break;
+                        }
+                        addPlayer(addPlayer[0], addPlayer[1], addPlayer[2], 0);
+                        break;
+                    case "addaiplayer":
+                        String[] addAIPlayer = null;
+                        try {
+                            try {
+                                addAIPlayer = userInput[1].split(",");
+                            } catch (Exception e) {
+                                System.out.println(
+                                    "Incorrect number of arguments supplied to command.");
+                                break;
+                            }
+                            checkArguments(3, addAIPlayer.length);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "Incorrect number of arguments supplied to command.");
+                            break;
+                        }
+                        addPlayer(addAIPlayer[0], addAIPlayer[1],
+                                 addAIPlayer[2], 1);
+                        break;
+                    case "removeplayer":
+                        String[] removePlayer = null;
+                        if (userInput.length == 1) {
+                            removeAllPlayers();
+                        } else {
+                            try {
+                                removePlayer = userInput[1].split(",");
+                            } catch (Exception e) {
+                                removePlayer(userInput[1]);
+                            }
+                            removePlayer(removePlayer[0]);
+                        }
+                        break;
+                    case "editplayer":
+                        String[] editPlayers = null;
+                        try {
+                            try {
+                                editPlayers = userInput[1].split(",");
+                            } catch (Exception e) {
+                                System.out.println(
+                                    "Incorrect number of arguments supplied to command.");
+                                break;
+                            }
+                            checkArguments(3, editPlayers.length);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "Incorrect number of arguments supplied to command.");
+                            break;
+                        }
+                        editPlayer(editPlayers[0], editPlayers[1],
+                                     editPlayers[2]);
+                        break;
+                    case "resetstats":
+                        String[] resetPlayer = null;
+                        if (userInput.length == 1) {
+                            resetAllPlayers();
+                        } else {
+                            try {
+                                resetPlayer = userInput[1].split(",");
+                            } catch (Exception e) {
+                                resetPlayer(userInput[1]);
+                            }
+                            resetPlayer(resetPlayer[0]);
+                        }
+                        break;
+                    case "displayplayer":
+                        String[] displayPlayer = null;
+                        if (userInput.length == 1) {
+                            displayAllPlayers();
+                        } else {
+                            try {
+                                displayPlayer = userInput[1].split(",");
+                            } catch (Exception e) {
+                                displayPlayer(userInput[1]);
+                            }
+                            displayPlayer(displayPlayer[0]);
+                        }
+                        break;
+                    case "rankings":
+                        String[] rankings = null;
+                        if (userInput.length == 1) {
+                            rankByDesc();
+                        } else {
+                            try {
+                                rankings = userInput[1].split(",");
+                            } catch (Exception e) {
+                                if (userInput[1].equals("desc")) {
+                                    rankByDesc();
+                                }
+                                if (userInput[1].equals("asc")) {
+                                    rankByAsc();
+                                }
+                            }
+                            if (rankings[0].equals("desc")) {
+                                rankByDesc();
+                            }
+                            if (rankings[0].equals("asc")) {
+                                rankByAsc();
+                            }
+                        }
+                        break;
+                    case "startgame":
+                        String[] startGame = null;
+                        try {
+                            try {
+                                startGame = userInput[1].split(",");
+                            } catch (Exception e) {
+                                System.out.println(
+                                    "Incorrect number of arguments supplied to command.");
+                                break;
+                            }
+                            checkArguments(4, startGame.length);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "Incorrect number of arguments supplied to command.");
+                            break;
+                        }
+                        startGame(Integer.valueOf(startGame[0]),
+                                Integer.valueOf(startGame[1]),
+                                startGame[2], startGame[3], 0);
+                        break;
+                    case "startadvancedgame":
+                        String[] startAdvancedGame = null;
+                        try {
+                            try {
+                                startAdvancedGame = userInput[1].split(",");
+                            } catch (Exception e) {
+                                System.out.println(
+                                    "Incorrect number of arguments supplied to command.");
+                                break;
+                            }
+                            checkArguments(3, startAdvancedGame.length);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "Incorrect  number of arguments supplied to command.");
+                            break;
+                        }
+                        startGame(Integer.valueOf(startAdvancedGame[0]),2, 
+                                                    startAdvancedGame[1], 
+                                                startAdvancedGame[2], 1);
+                        break;
+                    case "exit":
+                        try {
+                            savePlayer();
+                        } catch (Exception e) {
+
+                        }
+                        isInNimsys = false;
+                        break;
+                    case "test":
+                        test();
+                        break;
+                    default:
+                        try {
+                            checkCommand(userInput[0]);
+                        } catch (Exception e) {
+                            System.out.println(
+                                "'" + userInput[0] + "'" + " is not a valid command.");
+                        }
+                        break;
+                }
+            }
+        }
+        System.out.println();
+        System.exit(0);
+    }
+
+    // find certain player in the array according to username
+    public int findPlayer(String userName, int mode) {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] != null) {
+                if (players[i].getUserName().equals(userName)) {
+                    return i;
+                }
+            }
+        }
+        if (mode == 0) {
+        }
+        if (mode == 1) {
+            System.out.println("The player does not exist.");
+        }
+        return - 1;
+    }
+
+    // add player
+    public void addPlayer(String userName, String familyName, 
+                        String givenName, int humanOrAI) {
+        NimPlayer playerToAdd = null;
+        if (findPlayer(userName, 0) >= 0) {
+            System.out.println("The player already exists.");
+        } else {
+            if (humanOrAI == 0) playerToAdd = new NimHumanPlayer(userName, 
+                                                    familyName, givenName);
+            if (humanOrAI == 1) playerToAdd = new NimAIPlayer(userName,
+                                                     familyName, givenName);
+            playerToAdd.index = pos;
+            players[pos] = playerToAdd;
+            if (pos < players.length) {
+                pos++;
+            } else
+                return;
+        }
+    }
+
+    // remove all the players
+    public void removeAllPlayers() {
+        System.out.println(
+            "Are you sure you want to remove all players? (y/n)");
+        if (scanner.next().equals("y")) {
+            for (int i = 0; i < players.length; i++) {
+                players[i] = null;
+            }
+            pos = 0;
+        }
+        scanner.nextLine();
+    }
+
+    // remove certain player
+    public void removePlayer(String userName) {
+        int index = findPlayer(userName, 1);
+        if (index >= 0) {
+            players[index] = null;
+            while (players[index + 1] != null) {
+                players[index] = players[index + 1];
+                players[index].index--;
+                index++;
+            }
+            players[index] = null;
+            pos--;
+        }
+    }
+
+    // edit player's name
+    public void editPlayer(String userName,
+                             String newFamilyName, String newGivenName) {
+        int index = findPlayer(userName, 1);
+        if (index >= 0) {
+            players[index].setFamilyName(newFamilyName);
+            players[index].setGivenName(newGivenName);
+        }
+    }
+
+    // reset all the players
+    public void resetAllPlayers() {
+        System.out.println(
+            "Are you sure you want to reset all player statistics? (y/n)");
+        if (scanner.next().equals("y")) {
+            for (int i = 0; i < players.length; i++) {
+                if (players[i] != null) {
+                    players[i].reset();
+                }
+            }
+        }
+        scanner.nextLine();
+    }
+
+    // reset certain player
+    public void resetPlayer(String userName) {
+        int index = findPlayer(userName, 1);
+        if (index >= 0) {
+            players[index].reset();
+        }
+    }
+
+    // display info of all the players
+    public void displayAllPlayers() {
+        //NimPlayer[] displayArray = players;
+        NimPlayer[] displayArray = moveToNewArray(players);
+        Arrays.sort(displayArray, comparatorUserName);
+        for (int i = 0; i < displayArray.length; i++) {
+            if (displayArray[i] != null) {
+                displayArray[i].display();
+            }
+        }
+    }
+
+    // display info of certain player
+    public void displayPlayer(String userName) {
+        int index = findPlayer(userName, 1);
+        if (index >= 0) {
+            players[index].display();
+        }
+
+    }
+
+    // rank players by descend order
+    public void rankByDesc() {
+        NimPlayer[] rankingArray = moveToNewArray(players);
+        Arrays.sort(rankingArray, comparatorDesc);
+        if (rankingArray.length > 10) {
+            for (int i = 0; i < 10; i++) {
+                rankingArray[i].rankings();
+            }
+        } else {
+            for (int i = 0; i < rankingArray.length; i++) {
+                rankingArray[i].rankings();
+            }
+        }
+    }
+
+    // rank players by ascend order
+    public void rankByAsc() {
+        NimPlayer[] rankingArray = moveToNewArray(players);
+        Arrays.sort(rankingArray, comparatorAsc);
+        if (rankingArray.length > 10) {
+            for (int i = 0; i < 10; i++) {
+                rankingArray[i].rankings();
+            }
+        } else {
+            for (int i = 0; i < rankingArray.length; i++) {
+                rankingArray[i].rankings();
+            }
+        }
+    }
+
+    // move sorting result to a new array
+    public NimPlayer[] moveToNewArray(NimPlayer[] oldArray) {
+        NimPlayer[] newArray = new NimPlayer[pos];
+        for (int j = 0; j < newArray.length; j++) {
+            newArray[j] = oldArray[j];
+        }
+        return newArray;
+    }
+
+    // check if two players are in the array,
+    // and record play times,win times and ranking
+    //if mode=0,old NimGame,if mode=1,advanced NimGame
+    public void startGame(int initialStones, int upperBound, String userName1, 
+                            String userName2, int mode) {
+        NimPlayer winner = null;
+        int index1 = findPlayer(userName1, 0);
+        int index2 = findPlayer(userName2, 0);
+        if (index1 >= 0 && index2 >= 0) {
+            players[index1].playTimes++;
+            players[index2].playTimes++;
+            NimGame newVersus = new NimGame(initialStones, 
+                                          upperBound, players[index1],
+                                             players[index2], scanner);
+            switch (mode) {
+                case 0:
+                    winner = newVersus.start();
+                    break;
+                case 1:
+                    winner = newVersus.advancedStart();
+                    break;
+            }
+            players[winner.index].winTimes++;
+            players[index1].ranking =
+                (float) players[index1].winTimes / (float) players[index1].playTimes;
+            players[index2].ranking = 
+                (float) players[index2].winTimes / (float) players[index2].playTimes;
+            players[index1].rank = Math.round(100 * players[index1].ranking);
+            players[index2].rank = Math.round(100 * players[index2].ranking);
+        } else {
+            System.out.println("One of the players does not exist.");
+        }
+    }
+
+    //check if file exists
+    public boolean checkFileExist() {
+        File file = new File(fileName);
+        if (file.exists()) return true;
+        else return false;
+    }
+
+    //read game doc
+    public NimPlayer[] readPlayer() {
+        NimPlayer[] playersToReturn = new NimPlayer[a];
+        try {
+            ObjectInputStream ois = new ObjectInputStream(
+                                        new FileInputStream(fileName));
+            playersToReturn = (NimPlayer[]) ois.readObject();
+            pos = (int) ois.readInt();
+            ois.close();
+        } catch (Exception e) {
+            //System.out.println(e.getMessage());
+        }
+        return playersToReturn;
+    }
+
+     //save game doc
+    public void savePlayer() {
+        File file = new File(fileName);
+        if (! file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(
+                                        new FileOutputStream(fileName));
+            oos.writeObject(players);
+            oos.writeInt(pos);
+            oos.close();
+        } catch (IOException e) {
+        }   
+    }
+
+    //check if input command in the commands list 
+    public boolean checkCommand(String command) throws Exception {
+        if (Arrays.binarySearch(commands, command) < 0)
+            throw new Exception();
+        else return true;
+    }
+
+    //check if arguement is sufficient
+    public boolean checkArguments(int rightNumber, int inputNumber)
+        throws Exception {
+            if (inputNumber < rightNumber)
+                throw new Exception();
+          else return true;
+    }
+ // sort rank by descend order
+    Comparator<NimPlayer> comparatorDesc = new Comparator<NimPlayer>() {
+        @Override
+        public int compare(NimPlayer o1, NimPlayer o2) {
+            float res = o2.ranking - o1.ranking;
+            int resLast = 0;
+            if (res == 0) {
+                resLast = o1.getUserName().compareTo(o2.getUserName());
+            }
+            if (res < 0)
+                resLast = - 1;
+            if (res > 0)
+                resLast = 1;
+            return resLast;
+        }
+    };
+
+
+    // sort rank by ascend order
+    Comparator<NimPlayer> comparatorAsc = new Comparator<NimPlayer>() {
+        @Override
+        public int compare(NimPlayer o1, NimPlayer o2) {
+            float res = o1.rank - o2.rank;
+            int resLast = 0;
+            if (res == 0) {
+                res = o1.getUserName().compareTo(o2.getUserName());
+            }
+            if (res < 0)
+                resLast = - 1;
+            if (res > 0)
+                resLast = 1;
+            return resLast;
+        }
+    };
+    public void test() {
+        System.out.println(pos);
+    }
+
+    // sort username by Alphabetical order
+    Comparator<NimPlayer> comparatorUserName = new Comparator<NimPlayer>() {
+        @Override
+        public int compare(NimPlayer o1, NimPlayer o2) {
+            return o1.getUserName().compareTo(o2.getUserName());
+        }
+    };
+
+    public void setPlayers(NimPlayer[] players) {
+        this.players = players;
+    }
+
+}============================================
+src/AdvancedNimGame.java
+04:26:15_Friday_25_May_2018
+============================================
+
+/*
+COMP90041 Programming and Software Development
+Project C: Nimsys Game
+Student Name: Qianyu Guo
+Student Number:921808
+25 May 2018
+*/
+public interface AdvancedNimGame {
+    public NimPlayer advancedStart();
+    public void advancedTurn(NimPlayer player);
+    public void advancedDisplayStones(boolean[] available);
+    public NimPlayer advancedJudgeWinner();
+}
